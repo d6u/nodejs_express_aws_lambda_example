@@ -57,3 +57,11 @@ aws cloudformation deploy \
   --parameter-overrides \
     LambdaFunctionImageUri="<ecr_uri>:<version>"
 ```
+
+## Important Notes
+
+Docker image must use arm64 version, i.e. `public.ecr.aws/lambda/nodejs:18-arm64`, which matches the Architectures property of the lambda function.
+
+`SourceArn` of the lambda permission must be `arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/`, note it ends with `/*/*/` instead of `/*/*/*`.
+Because the `AWS::ApiGatewayV2::Api` resource only has one `AWS::ApiGatewayV2::Route` with `RouteKey` set to `GET /`, it doesn't have route mapped to `/*`.
+See https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html for ARN format for API Gateway.
