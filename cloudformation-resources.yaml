@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Compute resources.
+
+Parameters:
+  LambdaFunctionImageUri:
+    Type: String
+
+Resources:
+  # --- Lambda IAM ---
+  IamRoleLambdaShared:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  IamPolicyLambdaLogging:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${AWS::StackName}LambdaLogging
+      Roles:
+        - !Ref IamRoleLambdaShared
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+            Resource:
+              - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${LambdaFunction}:*
+
+  # --- CloudWatch ---
+  LogsLogGroupHttpApiAccessLog:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub ${AWS::StackName}HttpApiAccessLog
+      RetentionInDays: 30
+
+  # --- HTTP APIs ---
+  ApiGatewayApiHttp:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub ${AWS::StackName}ApiGatewayApiHttp
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - "*"
+        AllowHeaders:
+          - "*"
+        ExposeHeaders:
+          - "*"
+
+  # --- HTTP APIs stage ---
+  ApiGatewayStageHttpDefault:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ApiGatewayApiHttp
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        DetailedMetricsEnabled: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt LogsLogGroupHttpApiAccessLog.Arn
+        Format: >
+          {"requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "caller": "$context.identity.caller", "user": "$context.identity.user", "requestTime": "$context.requestTime", "routeKey": "$context.routeKey", "status": "$context.status"}
+
+  # --- HTTP APIs route: GET / ---
+  ApiGatewayRouteRoot:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGatewayApiHttp
+      RouteKey: "GET /"
+      Target: !Join ["/", [integrations, !Ref ApiGatewayIntegrationRoot]]
+  ApiGatewayIntegrationRoot:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGatewayApiHttp
+      IntegrationMethod: GET
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt LambdaFunction.Arn
+      PayloadFormatVersion: "2.0"
+
+  # --- Lambda ---
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Architectures:
+        - arm64
+      Role: !GetAtt IamRoleLambdaShared.Arn
+      PackageType: Image
+      Code:
+        ImageUri: !Ref LambdaFunctionImageUri
+      TracingConfig:
+        Mode: Active
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaFunction
+      Principal: apigateway.amazonaws.com
+      # See https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
+      # for the format of SourceArn
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/
