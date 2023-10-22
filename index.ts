@@ -1,10 +1,22 @@
-import serverless from "serverless-http";
-import express from "express";
+import { createServer } from "node:http";
+import { createSchema, createYoga } from "graphql-yoga";
+import serverless, { Application } from "serverless-http";
 
-const app = express();
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
+const yoga = createYoga({
+  schema: createSchema({
+    typeDefs: /* GraphQL */ `
+      type Query {
+        hello: String
+      }
+    `,
+    resolvers: {
+      Query: {
+        hello: () => "Hello from Yoga!",
+      },
+    },
+  }),
 });
 
-export const handler = serverless(app);
+const server = createServer(yoga);
+
+export const handler = serverless(server as Application);

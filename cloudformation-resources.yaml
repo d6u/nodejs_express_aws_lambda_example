@@ -78,14 +78,30 @@ Resources:
         Format: >
           {"requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "caller": "$context.identity.caller", "user": "$context.identity.user", "requestTime": "$context.requestTime", "routeKey": "$context.routeKey", "status": "$context.status"}
 
-  # --- HTTP APIs route: GET / ---
-  ApiGatewayRouteRoot:
+  # --- HTTP APIs route: POST /graphql ---
+  ApiGatewayRoutePostGraphql:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId: !Ref ApiGatewayApiHttp
-      RouteKey: "GET /"
-      Target: !Join ["/", [integrations, !Ref ApiGatewayIntegrationRoot]]
-  ApiGatewayIntegrationRoot:
+      RouteKey: "POST /graphql"
+      Target: !Join ["/", [integrations, !Ref ApiGatewayIntegrationPostGraphql]]
+  ApiGatewayIntegrationPostGraphql:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGatewayApiHttp
+      IntegrationMethod: POST
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt LambdaFunction.Arn
+      PayloadFormatVersion: "2.0"
+
+  # --- HTTP APIs route: GET /graphql ---
+  ApiGatewayRouteGetGraphql:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGatewayApiHttp
+      RouteKey: "GET /graphql"
+      Target: !Join ["/", [integrations, !Ref ApiGatewayIntegrationGetGraphql]]
+  ApiGatewayIntegrationGetGraphql:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref ApiGatewayApiHttp
@@ -106,7 +122,7 @@ Resources:
         ImageUri: !Ref LambdaFunctionImageUri
       TracingConfig:
         Mode: Active
-  LambdaPermission:
+  LambdaPermissionGetGraphql:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
@@ -114,4 +130,11 @@ Resources:
       Principal: apigateway.amazonaws.com
       # See https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
       # for the format of SourceArn
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/$default/GET/graphql
+  LambdaPermissionPostGraphql:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/$default/POST/graphql
