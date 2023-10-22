@@ -78,18 +78,18 @@ Resources:
         Format: >
           {"requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "caller": "$context.identity.caller", "user": "$context.identity.user", "requestTime": "$context.requestTime", "routeKey": "$context.routeKey", "status": "$context.status"}
 
-  # --- HTTP APIs route: GET / ---
+  # --- HTTP APIs route: POST /graphql ---
   ApiGatewayRouteRoot:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId: !Ref ApiGatewayApiHttp
-      RouteKey: "GET /"
+      RouteKey: "POST /graphql"
       Target: !Join ["/", [integrations, !Ref ApiGatewayIntegrationRoot]]
   ApiGatewayIntegrationRoot:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref ApiGatewayApiHttp
-      IntegrationMethod: GET
+      IntegrationMethod: POST
       IntegrationType: AWS_PROXY
       IntegrationUri: !GetAtt LambdaFunction.Arn
       PayloadFormatVersion: "2.0"
@@ -114,4 +114,4 @@ Resources:
       Principal: apigateway.amazonaws.com
       # See https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
       # for the format of SourceArn
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/graphql
