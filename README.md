@@ -60,6 +60,8 @@ aws cloudformation deploy \
 
 ## Important Notes
 
+https://www.npmjs.com/package/serverless-http is the library to convert a regular Express app into a lambda handler.
+
 Docker image must use arm64 version, i.e. `public.ecr.aws/lambda/nodejs:18-arm64`, which matches the Architectures property of the lambda function.
 
 `SourceArn` of the lambda permission must be `arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/`, note it ends with `/*/*/` instead of `/*/*/*`.
