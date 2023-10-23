@@ -99,15 +99,36 @@
 
 ## Clean Up
 
-Delete the stacks (both `TestResources` and `TestEcr`):
+1. Delete the stacks (both `TestResources` and `TestEcr`):
 
-```sh
-aws --region us-west-2 cloudformation delete-stack \
-  --stack-name TestResources
+   ```sh
+   aws --region us-west-2 cloudformation delete-stack \
+     --stack-name TestResources
+   ```
 
-aws --region us-west-2 cloudformation delete-stack \
-  --stack-name TestEcr
-```
+2. Delete the ECR:
+
+   1. (Optional) List the images:
+
+      ```sh
+      aws --region us-west-2 ecr list-images \
+        --repository-name <ecr_name>
+      ```
+
+   2. Delete all images:
+
+      ```sh
+      aws --region us-west-2 ecr batch-delete-image \
+        --repository-name <ecr_name> \
+        --image-ids imageTag=v1 imageTag=v2
+      ```
+
+   3. Delete the repository:
+
+      ```sh
+      aws --region us-west-2 cloudformation delete-stack \
+        --stack-name TestEcr
+      ```
 
 ## Important Notes
 
