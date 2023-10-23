@@ -14,7 +14,7 @@
      --stack-name TestEcr
    ```
 
-2. Read the output of the stack to get the ECR URI:
+2. Read the output of the stack to get the ECR URI for future steps:
 
    ```sh
    aws --region us-west-2 \
@@ -134,7 +134,8 @@
 
 - [serverless-http](https://www.npmjs.com/package/serverless-http) is the library to convert a regular Express app into a lambda handler.
 - Docker image must use arm64 version, i.e. `public.ecr.aws/lambda/nodejs:18-arm64`, which matches the `Architectures` property of the lambda function.
-- The resource-path part of `SourceArn` of `AWS::Lambda::Permission` must match the `AWS::ApiGatewayV2::Route`'s ARN. Otherwise, it will show as error in Lambda > Triggers section of AWS Console. For example:
+- `AWS::Serverless::Function` is used instead of `AWS::Lambda::Function` so we don't have to create IAM roles and policies for the lambda function ourselves.
+- The `SourceArn` field of `AWS::Lambda::Permission` can be ignored. If you want to specify it, the resource-path must match the `AWS::ApiGatewayV2::Route`'s ARN. Otherwise, it will show as error in Lambda > Triggers section of AWS Console. For example:
 
   - If `AWS::ApiGatewayV2::Route` has `RouteKey` set to `GET /`, then the `SourceArn` should be `arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/`, where it ends with `/*/*/` instead of `/*/*/*`. Because `AWS::ApiGatewayV2::Route` didn't define path `/*`.
   - For `POST /graphql`, it should be `arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/graphql`.
