@@ -79,8 +79,7 @@
 7. Deploy the CloudFormation stack:
 
    ```sh
-   aws cloudformation deploy \
-     --region us-west-2 \
+   aws --region us-west-2 cloudformation deploy \
      --template-file cloudformation-resources.yaml \
      --stack-name TestResources \
      --capabilities CAPABILITY_NAMED_IAM \
@@ -97,6 +96,18 @@
    ```
 
    - `-H 'content-type: application/json'` is required for GraphQL requests.
+
+## Clean Up
+
+Delete the stacks (both `TestResources` and `TestEcr`):
+
+```sh
+aws --region us-west-2 cloudformation delete-stack \
+  --stack-name TestResources
+
+aws --region us-west-2 cloudformation delete-stack \
+  --stack-name TestEcr
+```
 
 ## Important Notes
 
