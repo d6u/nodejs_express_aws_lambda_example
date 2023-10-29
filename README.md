@@ -2,8 +2,48 @@
 
 - See `index.ts` for example for GraphQL setup.
 - See `express.ts` for example for Express setup with `GET /`
+- Using AWS SAM CLI `sam` is probably the easiest way to deploy lambda based applications.
 
-## Deployment
+## Deployment with AWS SAM
+
+### Important files:
+
+- `samconfig.toml`: AWS SAM configuration file.
+- `cloudformation-resources-v3.yaml`: AWS SAM template file, essentially a CloudFormation template file. By default this should be named `template.yaml`.
+  - This is almost the same as `cloudformation-resources-v2.yaml`. But running `sam build` will automatically build the image based on the `Metadata` field.
+
+### Steps
+
+1. Prepare the application for later deployment or local testing:
+
+   ```sh
+   sam build -t cloudformation-resources-v3.yaml
+   ```
+
+   - If template is called `template.yaml`, `-t` option can be omitted.
+
+2. Deploy the application:
+
+   ```sh
+   sam deploy
+   ```
+
+   - If there is `samconfig.toml` created already or running deploy for the first time, we can add `--guided`.
+   - No need to use `-t cloudformation-resources-v3.yaml` like `sam build`, because this will actually use `.aws-sam/build/template.yaml` created in `sam build` step.
+
+### Clean Up
+
+Delete the stack:
+
+```sh
+sam delete
+```
+
+- No need to use `-t cloudformation-resources-v3.yaml`, because needed information is stored
+
+## Deployment with CloudFormation directly
+
+### Steps
 
 1. (One time setup) Provision ECR:
 
@@ -97,7 +137,7 @@
 
    - `-H 'content-type: application/json'` is required for GraphQL requests.
 
-## Clean Up
+### Clean Up
 
 1. Delete the stacks (both `TestResources` and `TestEcr`):
 

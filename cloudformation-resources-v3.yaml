@@ -2,10 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Compute resources.
 
-Parameters:
-  LambdaFunctionImageUri:
-    Type: String
-
 Globals:
   Function:
     Tracing: Active
@@ -41,4 +37,8 @@ Resources:
             Path: /graphql
             Method: POST
       PackageType: Image
-      ImageUri: !Ref LambdaFunctionImageUri
+    # For building the image for the `PackageType: Image` config
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./
+      DockerTag: v3
