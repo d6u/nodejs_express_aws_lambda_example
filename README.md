@@ -20,6 +20,7 @@
    sam build -t cloudformation-resources-v3.yaml
    ```
 
+   - `sam build` create a `.aws-sam` folder.
    - If template is called `template.yaml`, `-t` option can be omitted.
 
 2. Deploy the application:
@@ -28,7 +29,7 @@
    sam deploy
    ```
 
-   - If there is `samconfig.toml` created already or running deploy for the first time, we can add `--guided`.
+   - If `samconfig.toml` hasn't been created already, or we are running deploy for the first time, we can add `--guided`.
    - No need to use `-t cloudformation-resources-v3.yaml` like `sam build`, because this will actually use `.aws-sam/build/template.yaml` created in `sam build` step.
 
 ### Clean Up
