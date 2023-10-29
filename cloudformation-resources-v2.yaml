@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Compute resources.
+
+Parameters:
+  LambdaFunctionImageUri:
+    Type: String
+
+Globals:
+  Function:
+    Tracing: Active
+  Api:
+    TracingEnabled: true
+    # Setting this prevent the creation of "Stage" stage in AWS::Serverless::Api
+    OpenApiVersion: "2.0"
+
+Resources:
+  # --- HTTP APIs ---
+  ApiGatewayApiHttpV3:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+
+  # --- Serverless Application Model (SAM) ---
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Architectures:
+        - arm64
+      Events:
+        GetGraphql:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApiHttpV3
+            Path: /graphql
+            Method: GET
+        PostGraphql:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApiHttpV3
+            Path: /graphql
+            Method: POST
+      PackageType: Image
+      ImageUri: !Ref LambdaFunctionImageUri

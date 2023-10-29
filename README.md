@@ -133,11 +133,16 @@
 ## Important Notes
 
 - [serverless-http](https://www.npmjs.com/package/serverless-http) is the library to convert a regular Express app into a lambda handler.
+
 - Docker image must use arm64 version, i.e. `public.ecr.aws/lambda/nodejs:18-arm64`, which matches the `Architectures` property of the lambda function.
+
 - `AWS::Serverless::Function` is used instead of `AWS::Lambda::Function` so we don't have to create IAM roles and policies for the lambda function ourselves.
-- The `SourceArn` field of `AWS::Lambda::Permission` can be ignored. If you want to specify it, the resource-path must match the `AWS::ApiGatewayV2::Route`'s ARN. Otherwise, it will show as error in Lambda > Triggers section of AWS Console. For example:
+
+- In `cloudformation-resources-v1.yaml`, the `SourceArn` field of `AWS::Lambda::Permission` can be ignored. If you want to specify it, the resource-path must match the `AWS::ApiGatewayV2::Route`'s ARN. Otherwise, it will show as error in Lambda > Triggers section of AWS Console. For example:
 
   - If `AWS::ApiGatewayV2::Route` has `RouteKey` set to `GET /`, then the `SourceArn` should be `arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/`, where it ends with `/*/*/` instead of `/*/*/*`. Because `AWS::ApiGatewayV2::Route` didn't define path `/*`.
   - For `POST /graphql`, it should be `arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGatewayApiHttp.ApiId}/*/*/graphql`.
 
   See https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html for ARN format for API Gateway. The stage and http-method part can still be "\*".
+
+- In `cloudformation-resources-v2.yaml`, we used `AWS::Serverless::Api` to simplify the creation of API Gateway.
